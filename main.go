@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"os"
+	"strings"
 	"time"
 
 	"image/color"
@@ -11,7 +12,8 @@ import (
 	_ "image/png"
 )
 
-const imageURL = "a.gif"
+// Images no included in this repository
+const imageURL = "cow.gif"
 
 func main() {
 	imagefile, err := os.Open(imageURL)
@@ -25,7 +27,9 @@ func main() {
 		panic(err)
 	}
 
-	printGiftImage(gifImage)
+	for {
+		printGiftImage(gifImage)
+	}
 }
 
 func printInColor(color color.Color) string {
@@ -36,26 +40,36 @@ func printInColor(color color.Color) string {
 		return "\033[1C"
 	}
 
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm█\033[0m", r, g, b)
+	//same color for the character and the background
+	if r == g && g == b {
+		//move the cursor 1 position to the right
+		return "\033[1C"
+	}
+
+	return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm█\033[0m", r, g, b, r, g, b)
 }
 
 func printImage(img image.Image) {
+	var buffer strings.Builder
 	y := 0
 	countNewLine := 1
 	for ; y < img.Bounds().Max.Y; y += 3 {
-		for x := 0; x < img.Bounds().Max.X; x += 3 {
-			fmt.Print(printInColor(img.At(x, y)))
-			fmt.Print(".")
+		for x := 0; x < img.Bounds().Max.X; x += 1 {
+			buffer.WriteString(printInColor(img.At(x, y)))
+			//square character
 		}
-		fmt.Println()
+
+		buffer.WriteString("\n")
 		countNewLine++
 	}
+	fmt.Println(buffer.String())
 
 	//move the cursor up
-	fmt.Printf("\033[%dA", countNewLine)
+	fmt.Printf("\033[%dA", countNewLine+1)
 
 	//move the cursor to the left beginning of the line
-	fmt.Printf("\033[%dD", img.Bounds().Max.X/20)
+	fmt.Printf("\033[%dD", img.Bounds().Max.X/3)
+
 }
 
 func printGiftImage(img *gif.GIF) {
@@ -66,5 +80,4 @@ func printGiftImage(img *gif.GIF) {
 
 		time.Sleep(time.Duration(img.Delay[i]) * time.Microsecond)
 	}
-	printGiftImage(img)
 }
