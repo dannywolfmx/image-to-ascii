@@ -9,8 +9,6 @@ import (
 
 	"image/color"
 
-	"golang.org/x/image/draw"
-
 	"image/gif"
 	_ "image/png"
 )
@@ -41,73 +39,75 @@ func main() {
 	}
 }
 
-func printInColor(color color.Color) string {
+func printInColor(color color.Color, character string) string {
 	r, g, b, a := color.RGBA()
 	//Scape to the rgba color in the terminal
 	if a == 0 {
-		//move the cursor 1 position to the right
-		return "\033[1C"
+		//move the cursor the size of the character to the right
+
+		return fmt.Sprintf("\033[%dC", len(character))
 	}
 
-	//same color for the character and the background
-	if r == g && g == b {
-		//move the cursor 1 position to the right
-		return "\033[1C"
-	}
-
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm█\033[0m", r, g, b, r, g, b)
+	//set color of the character and background
+	//return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
+	return fmt.Sprintf("\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
 }
 
-func printImage(img image.Image) string {
+func printImage(img image.Image, fitX, fitY int) string {
+
 	var buffer strings.Builder
 	y := 0
-	countNewLine := 1
 
-	//width := img.Bounds().Max.X / 2
-	//height := img.Bounds().Max.Y / 2
+	//save cursor position
+	buffer.WriteString("\033[s")
 
-	width := 100
-	height := 100
-
-	img = resizeImage(img, width, height)
-	for ; y < img.Bounds().Max.Y; y += 1 {
-		for x := 0; x < img.Bounds().Max.X; x += 1 {
-			buffer.WriteString(printInColor(img.At(x, y)))
-			buffer.WriteString(printInColor(img.At(x, y)))
-			buffer.WriteString(printInColor(img.At(x, y)))
+	//print the image fitting the width and height
+	for ; y < img.Bounds().Max.Y; y += fitY {
+		for x := 0; x < img.Bounds().Max.X; x += fitX {
+			buffer.WriteString(printInColor(img.At(x, y), "##"))
 		}
-
 		buffer.WriteString("\n")
-		countNewLine++
 	}
 
-	buffer.WriteString(fmt.Sprintf("\033[%dA", countNewLine))
+	//restore cursor position
+	buffer.WriteString("\033[u")
 
-	buffer.WriteString(fmt.Sprintf("\033[%dD", img.Bounds().Max.X))
+	//buffer.WriteString(fmt.Sprintf("\033[%dA", img.Bounds().Max.Y+1))
+
+	//buffer.WriteString(fmt.Sprintf("\033[%dD", img.Bounds().Max.X+1))
 	return buffer.String()
 
 }
 
-func resizeImage(src image.Image, width, height int) image.Image {
-	img := image.NewRGBA(
-		image.Rect(0, 0, width, height),
-	)
-	draw.NearestNeighbor.Scale(img, img.Bounds(), src, src.Bounds(), draw.Over, nil)
-	return img
-}
-
 func generateGifCache(img *gif.GIF) []GIFCache {
 	cache := make([]GIFCache, len(img.Image))
+	scaleImage := img.Image[0]
+	width := 75
+	height := 75
+
+	//keep the aspect ratio of the image
+	if scaleImage.Bounds().Max.X > scaleImage.Bounds().Max.Y {
+		height = int(float64(scaleImage.Bounds().Max.Y) / float64(scaleImage.Bounds().Max.X) * float64(width))
+	} else {
+		width = int(float64(scaleImage.Bounds().Max.X) / float64(scaleImage.Bounds().Max.Y) * float64(height))
+	}
+
+	addIterationX := scaleImage.Bounds().Max.X / width
+	addIterationY := scaleImage.Bounds().Max.Y / height
+
 	for i, frame := range img.Image {
 
-		cache[i].images = printImage(frame)
+		cache[i].images = printImage(frame, addIterationX, addIterationY)
 		cache[i].delay = time.Duration(img.Delay[i]) * (time.Second / 100)
+		fmt.Println(len(cache[i].images))
 	}
 
 	return cache
 }
 
 func printGif(cache []GIFCache) {
+	//clear screen
+	fmt.Print("\033[H\033[2J")
 	for _, frame := range cache {
 		fmt.Print(frame.images)
 		time.Sleep(frame.delay)
