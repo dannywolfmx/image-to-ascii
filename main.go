@@ -49,8 +49,8 @@ func printInColor(color color.Color, character string) string {
 	}
 
 	//set color of the character and background
-	//return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
+	return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm%s\033[0m", r, g, b, r, g, b, character)
+	//return fmt.Sprintf("\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
 }
 
 func printImage(img image.Image, fitX, fitY int) string {
@@ -64,7 +64,7 @@ func printImage(img image.Image, fitX, fitY int) string {
 	//print the image fitting the width and height
 	for ; y < img.Bounds().Max.Y; y += fitY {
 		for x := 0; x < img.Bounds().Max.X; x += fitX {
-			buffer.WriteString(printInColor(img.At(x, y), "##"))
+			buffer.WriteString(printInColor(img.At(x, y), "."))
 		}
 		buffer.WriteString("\n")
 	}
@@ -82,8 +82,8 @@ func printImage(img image.Image, fitX, fitY int) string {
 func generateGifCache(img *gif.GIF) []GIFCache {
 	cache := make([]GIFCache, len(img.Image))
 	scaleImage := img.Image[0]
-	width := 75
-	height := 75
+	width := 150
+	height := 200
 
 	//keep the aspect ratio of the image
 	if scaleImage.Bounds().Max.X > scaleImage.Bounds().Max.Y {
@@ -99,7 +99,6 @@ func generateGifCache(img *gif.GIF) []GIFCache {
 
 		cache[i].images = printImage(frame, addIterationX, addIterationY)
 		cache[i].delay = time.Duration(img.Delay[i]) * (time.Second / 100)
-		fmt.Println(len(cache[i].images))
 	}
 
 	return cache
