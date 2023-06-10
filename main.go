@@ -16,7 +16,7 @@ import (
 )
 
 // Images no included in this repository
-const imageURL = "a.gif"
+const imageURL = "cow.gif"
 
 type GIFCache struct {
 	images string
@@ -64,10 +64,36 @@ func printImage(img image.Image, fitX, fitY int) string {
 	//save cursor position
 	fmt.Fprint(&buffer, "\033[s")
 
+	//transform to grayscale
+
+	grayImage := image.NewGray16(img.Bounds())
+
+	for y := 0; y < img.Bounds().Max.Y; y++ {
+		for x := 0; x < img.Bounds().Max.X; x++ {
+			grayImage.Set(x, y, img.At(x, y))
+		}
+	}
+
 	//print the image fitting the width and height
 	for ; y < img.Bounds().Max.Y; y += fitY {
 		for x := 0; x < img.Bounds().Max.X; x += fitX {
-			printInColor(&buffer, img.At(x, y), "##")
+			//grayScale
+			grayImage.Set(x, y, img.At(x, y))
+			r, g, b, _ := grayImage.At(x, y).RGBA()
+			//Note the gray convertion will delete the alpha channel,so we need to
+			//get the alpha channel from the original image
+			_, _, _, a := img.At(x, y).RGBA()
+			if a == 0 {
+				//move the cursor the size of the character to the right
+				fmt.Fprintf(&buffer, "\033[1C")
+				continue
+			}
+
+			//printInColor(&buffer, grayImage.At(x, y), "#")
+
+			//	//set color as ascii
+			fmt.Fprint(&buffer, string(gray16ToAnsi(r, g, b)))
+
 		}
 		fmt.Fprintln(&buffer, "")
 	}
@@ -85,8 +111,8 @@ func printImage(img image.Image, fitX, fitY int) string {
 func generateGifCache(img *gif.GIF) []GIFCache {
 	cache := make([]GIFCache, len(img.Image))
 	scaleImage := img.Image[0]
-	width := 150
-	height := 200
+	width := 75
+	height := 75
 
 	//keep the aspect ratio of the image
 	if scaleImage.Bounds().Max.X > scaleImage.Bounds().Max.Y {
@@ -122,4 +148,30 @@ func printGif(cache []GIFCache) {
 		fmt.Print(frame.images)
 		time.Sleep(frame.delay)
 	}
+}
+
+// Transform RGB to ANSII
+func gray16ToAnsi(r, g, b uint32) rune {
+	r8, _, _ := rgb16ToRgb8(r, g, b)
+
+	if r8 >= 192 {
+		return ' '
+	}
+
+	if r8 >= 128 {
+		return '▒'
+	}
+
+	if r8 >= 64 {
+		return '▓'
+	}
+
+	return '█'
+}
+
+// Note the gray color is the same for all the colors example
+// if r is 255 the g and b will be the same in all the cases
+func rgb16ToRgb8(r, g, b uint32) (uint8, uint8, uint8) {
+	gray8Value := uint8(r >> 8)
+	return gray8Value, gray8Value, gray8Value
 }
