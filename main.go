@@ -16,7 +16,7 @@ import (
 )
 
 // Images no included in this repository
-const imageURL = "cow.gif"
+const imageURL = "pato.gif"
 
 type GIFCache struct {
 	images string
@@ -111,8 +111,8 @@ func printImage(img image.Image, fitX, fitY int) string {
 func generateGifCache(img *gif.GIF) []GIFCache {
 	cache := make([]GIFCache, len(img.Image))
 	scaleImage := img.Image[0]
-	width := 75
-	height := 75
+	width := 200
+	height := 100
 
 	//keep the aspect ratio of the image
 	if scaleImage.Bounds().Max.X > scaleImage.Bounds().Max.Y {
@@ -155,18 +155,18 @@ func gray16ToAnsi(r, g, b uint32) rune {
 	r8, _, _ := rgb16ToRgb8(r, g, b)
 
 	if r8 >= 192 {
-		return ' '
+		return '█'
 	}
 
 	if r8 >= 128 {
-		return '▒'
-	}
-
-	if r8 >= 64 {
 		return '▓'
 	}
 
-	return '█'
+	if r8 >= 64 {
+		return '▒'
+	}
+	return ' '
+
 }
 
 // Note the gray color is the same for all the colors example
