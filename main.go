@@ -51,14 +51,9 @@ func printInColor(w io.Writer, color color.Color, character string) {
 	}
 
 	//set color of the character and background
-<<<<<<< HEAD
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm%s\033[0m", r, g, b, r, g, b, character)
-	//return fmt.Sprintf("\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
-=======
 	//return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
 
 	fmt.Fprintf(w, "\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
->>>>>>> refs/remotes/origin/main
 }
 
 func printImage(img image.Image, fitX, fitY int) string {
@@ -72,11 +67,7 @@ func printImage(img image.Image, fitX, fitY int) string {
 	//print the image fitting the width and height
 	for ; y < img.Bounds().Max.Y; y += fitY {
 		for x := 0; x < img.Bounds().Max.X; x += fitX {
-<<<<<<< HEAD
-			buffer.WriteString(printInColor(img.At(x, y), "."))
-=======
 			printInColor(&buffer, img.At(x, y), "##")
->>>>>>> refs/remotes/origin/main
 		}
 		fmt.Fprintln(&buffer, "")
 	}
@@ -109,10 +100,6 @@ func generateGifCache(img *gif.GIF) []GIFCache {
 
 	var wg sync.WaitGroup
 
-<<<<<<< HEAD
-		cache[i].images = printImage(frame, addIterationX, addIterationY)
-		cache[i].delay = time.Duration(img.Delay[i]) * (time.Second / 100)
-=======
 	for i, frame := range img.Image {
 		wg.Add(1)
 		go (func(index int, paletted image.Image) {
@@ -121,7 +108,6 @@ func generateGifCache(img *gif.GIF) []GIFCache {
 			cache[index].images = printImage(paletted, addIterationX, addIterationY)
 			cache[index].delay = time.Duration(img.Delay[index]) * (time.Second / 100)
 		})(i, frame)
->>>>>>> refs/remotes/origin/main
 	}
 
 	wg.Wait()
