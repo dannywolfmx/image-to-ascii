@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"image"
+	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"image/color"
@@ -39,18 +41,24 @@ func main() {
 	}
 }
 
-func printInColor(color color.Color, character string) string {
+func printInColor(w io.Writer, color color.Color, character string) {
 	r, g, b, a := color.RGBA()
 	//Scape to the rgba color in the terminal
 	if a == 0 {
 		//move the cursor the size of the character to the right
-
-		return fmt.Sprintf("\033[%dC", len(character))
+		fmt.Fprintf(w, "\033[%dC", len(character))
+		return
 	}
 
 	//set color of the character and background
+<<<<<<< HEAD
 	return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm%s\033[0m", r, g, b, r, g, b, character)
 	//return fmt.Sprintf("\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
+=======
+	//return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
+
+	fmt.Fprintf(w, "\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
+>>>>>>> refs/remotes/origin/main
 }
 
 func printImage(img image.Image, fitX, fitY int) string {
@@ -59,18 +67,22 @@ func printImage(img image.Image, fitX, fitY int) string {
 	y := 0
 
 	//save cursor position
-	buffer.WriteString("\033[s")
+	fmt.Fprint(&buffer, "\033[s")
 
 	//print the image fitting the width and height
 	for ; y < img.Bounds().Max.Y; y += fitY {
 		for x := 0; x < img.Bounds().Max.X; x += fitX {
+<<<<<<< HEAD
 			buffer.WriteString(printInColor(img.At(x, y), "."))
+=======
+			printInColor(&buffer, img.At(x, y), "##")
+>>>>>>> refs/remotes/origin/main
 		}
-		buffer.WriteString("\n")
+		fmt.Fprintln(&buffer, "")
 	}
 
 	//restore cursor position
-	buffer.WriteString("\033[u")
+	fmt.Fprint(&buffer, "\033[u")
 
 	//buffer.WriteString(fmt.Sprintf("\033[%dA", img.Bounds().Max.Y+1))
 
@@ -95,11 +107,24 @@ func generateGifCache(img *gif.GIF) []GIFCache {
 	addIterationX := scaleImage.Bounds().Max.X / width
 	addIterationY := scaleImage.Bounds().Max.Y / height
 
-	for i, frame := range img.Image {
+	var wg sync.WaitGroup
 
+<<<<<<< HEAD
 		cache[i].images = printImage(frame, addIterationX, addIterationY)
 		cache[i].delay = time.Duration(img.Delay[i]) * (time.Second / 100)
+=======
+	for i, frame := range img.Image {
+		wg.Add(1)
+		go (func(index int, paletted image.Image) {
+			defer wg.Done()
+
+			cache[index].images = printImage(paletted, addIterationX, addIterationY)
+			cache[index].delay = time.Duration(img.Delay[index]) * (time.Second / 100)
+		})(i, frame)
+>>>>>>> refs/remotes/origin/main
 	}
+
+	wg.Wait()
 
 	return cache
 }
