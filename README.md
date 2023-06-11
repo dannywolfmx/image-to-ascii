@@ -32,11 +32,11 @@ $ go build -o image2ascii main.go
 
 ## Flags
 
-| Flag | Description | Default |
-| --- | --- | --- |
-| `-w` | width of the image | 25 |
-| `-h` | height of the image | 25 |
-| `-i` | input source image , it can be a localfile or external url | empty |
+| Flag | Description | Default | Needed |
+| --- | --- | --- | --- |
+| `-w` | width of the image | 25 | No |
+| `-h` | height of the image | 25 | No |
+| `-i` | input source image , it can be a localfile or external url | empty | Yes |
 
 
 ## Recomended terminals
