@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -15,27 +17,50 @@ import (
 	_ "image/png"
 )
 
-// Images no included in this repository
-const imageURL = "pato.gif"
-
 type GIFCache struct {
 	images string
 	delay  time.Duration
 }
 
+//go run main.go -h=75 -w=100 -i=https://media.giphy.com/media/3o7aDcz2YkI2XK8MlO/giphy.gif
+
 func main() {
-	imagefile, err := os.Open(imageURL)
+	height := flag.Int("h", 25, "height of the image")
+	width := flag.Int("w", 25, "width of the image")
+	imageURL := flag.String("i", "", "image url")
+
+	flag.Parse()
+
+	if *imageURL == "" {
+		fmt.Println("===== You need to specify an image url =====")
+		return
+	}
+
+	var imageFile io.ReadCloser
+
+	//check if the image is a local file or a url
+	if strings.HasPrefix(*imageURL, "http") {
+		imageFile = getImageFromURL(*imageURL)
+	} else {
+		_, err := os.Stat(*imageURL)
+		if err != nil {
+			fmt.Println("===== The image file does not exist =====")
+			return
+		}
+		imageFile, err = os.Open(*imageURL)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	gifImage, err := gif.DecodeAll(imageFile)
+	imageFile.Close()
+
 	if err != nil {
 		panic(err)
 	}
 
-	gifImage, err := gif.DecodeAll(imagefile)
-
-	if err != nil {
-		panic(err)
-	}
-
-	cache := generateGifCache(gifImage)
+	cache := generateGifCache(gifImage, *height, *width)
 	for {
 		printGif(cache)
 	}
@@ -54,6 +79,16 @@ func printInColor(w io.Writer, color color.Color, character string) {
 	//return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
 
 	fmt.Fprintf(w, "\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
+}
+
+func getImageFromURL(url string) io.ReadCloser {
+	response, err := http.Get(url)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return response.Body
 }
 
 func printImage(img image.Image, fitX, fitY int) string {
@@ -108,18 +143,9 @@ func printImage(img image.Image, fitX, fitY int) string {
 
 }
 
-func generateGifCache(img *gif.GIF) []GIFCache {
+func generateGifCache(img *gif.GIF, height, width int) []GIFCache {
 	cache := make([]GIFCache, len(img.Image))
 	scaleImage := img.Image[0]
-	width := 200
-	height := 100
-
-	//keep the aspect ratio of the image
-	if scaleImage.Bounds().Max.X > scaleImage.Bounds().Max.Y {
-		height = int(float64(scaleImage.Bounds().Max.Y) / float64(scaleImage.Bounds().Max.X) * float64(width))
-	} else {
-		width = int(float64(scaleImage.Bounds().Max.X) / float64(scaleImage.Bounds().Max.Y) * float64(height))
-	}
 
 	addIterationX := scaleImage.Bounds().Max.X / width
 	addIterationY := scaleImage.Bounds().Max.Y / height
