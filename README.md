@@ -38,6 +38,13 @@ $ go run main.go -w=75 -h=100 -i=https://upload.wikimedia.org/wikipedia/commons/
 $ go build -o image2ascii main.go
 ```
 
+## Note
+
+- The image will be resized to the width and height specified in the flags
+- The image will be converted to grayscale
+- Remember to do zoom out in your terminal to see the image correctly 
+
+
 ## Flags
 
 | Flag | Description | Default | Needed |
