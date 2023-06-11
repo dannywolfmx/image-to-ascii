@@ -28,6 +28,7 @@ func main() {
 	height := flag.Int("h", 25, "height of the image")
 	width := flag.Int("w", 25, "width of the image")
 	imageURL := flag.String("i", "", "image url")
+	colors := flag.Bool("c", false, "use colors")
 
 	flag.Parse()
 
@@ -60,25 +61,19 @@ func main() {
 		panic(err)
 	}
 
-	cache := generateGifCache(gifImage, *height, *width)
+	cache := generateGifCache(gifImage, *height, *width, *colors)
 	for {
 		printGif(cache)
 	}
 }
 
-func printInColor(w io.Writer, color color.Color, character string) {
-	r, g, b, a := color.RGBA()
-	//Scape to the rgba color in the terminal
-	if a == 0 {
-		//move the cursor the size of the character to the right
-		fmt.Fprintf(w, "\033[%dC", len(character))
-		return
-	}
+func printInColor(w io.Writer, color color.Color) {
+	r, g, b, _ := color.RGBA()
 
 	//set color of the character and background
-	//return fmt.Sprintf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
+	fmt.Fprintf(w, "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm", r, g, b, r, g, b)
 
-	fmt.Fprintf(w, "\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, character)
+	//fmt.Fprintf(w, "\033[38;2;%d;%d;%dm", r, g, b)
 }
 
 func getImageFromURL(url string) io.ReadCloser {
@@ -91,7 +86,7 @@ func getImageFromURL(url string) io.ReadCloser {
 	return response.Body
 }
 
-func printImage(img image.Image, fitX, fitY int) string {
+func printImage(img image.Image, fitX, fitY int, colors bool) string {
 
 	var buffer strings.Builder
 	y := 0
@@ -127,7 +122,13 @@ func printImage(img image.Image, fitX, fitY int) string {
 			//printInColor(&buffer, grayImage.At(x, y), "#")
 
 			//	//set color as ascii
-			fmt.Fprint(&buffer, string(gray16ToAnsi(r, g, b)))
+			if colors {
+				printInColor(&buffer, img.At(x, y))
+				fmt.Fprint(&buffer, string(gray16ToAnsi(r, g, b)))
+				fmt.Fprint(&buffer, "\033[0m")
+			} else {
+				fmt.Fprint(&buffer, string(gray16ToAnsi(r, g, b)))
+			}
 
 		}
 		fmt.Fprintln(&buffer, "")
@@ -143,7 +144,7 @@ func printImage(img image.Image, fitX, fitY int) string {
 
 }
 
-func generateGifCache(img *gif.GIF, height, width int) []GIFCache {
+func generateGifCache(img *gif.GIF, height, width int, colors bool) []GIFCache {
 	cache := make([]GIFCache, len(img.Image))
 	scaleImage := img.Image[0]
 
@@ -157,7 +158,7 @@ func generateGifCache(img *gif.GIF, height, width int) []GIFCache {
 		go (func(index int, paletted image.Image) {
 			defer wg.Done()
 
-			cache[index].images = printImage(paletted, addIterationX, addIterationY)
+			cache[index].images = printImage(paletted, addIterationX, addIterationY, colors)
 			cache[index].delay = time.Duration(img.Delay[index]) * (time.Second / 100)
 		})(i, frame)
 	}
