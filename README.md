@@ -20,6 +20,14 @@ future support
 ```bash
 $ go run main.go -w=25 -h=25 -i=localfile.gif
 ```
+or 
+
+```bash
+$ go run main.go -w 25 -h 25 -i localfile.gif
+```
+
+or 
+
 ```bash
 $ go run main.go -w=75 -h=100 -i=https://upload.wikimedia.org/wikipedia/commons/5/5a/Rotating_Tux.gif 
 ```
