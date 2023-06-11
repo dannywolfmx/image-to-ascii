@@ -1,18 +1,43 @@
 <!--Flags settup of the application> -->
 
+# Image to ASCII
+
+This is a simple application that converts an image to ASCII art.
+
+### supported formats
+
+- gif
+
+future support
+
+- jpg
+- png
+- bmp
+
+
+## How to use
+
+```bash
+$ go run main.go -w=25 -h=25 -i=localfile.gif
+```
+```bash
+$ go run main.go -w=75 -h=100 -i=https://upload.wikimedia.org/wikipedia/commons/5/5a/Rotating_Tux.gif 
+```
+
+## how to build
+
+```bash
+$ go build -o image2ascii main.go
+```
+
 ## Flags
 
 | Flag | Description | Default |
 | --- | --- | --- |
-| `-w` | width of the image | |
-| `-h` | height of the image | |
-| `-i` | input source image , it can be a localfile or external url | |
+| `-w` | width of the image | 25 |
+| `-h` | height of the image | 25 |
+| `-i` | input source image , it can be a localfile or external url | empty |
 
-## Example
-
-```bash
-$ go run main.go -w=75 -h=100 -i=https://upload.wikimedia.org/wikipedia/commons/5/5a/Rotating_Tux.gif 
-```
 
 ## Recomended terminals
 
