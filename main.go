@@ -87,25 +87,16 @@ func getImageFromURL(url string) io.ReadCloser {
 }
 
 func printImage(img image.Image, fitX, fitY int, colors bool) string {
-
 	var buffer strings.Builder
-	y := 0
 
 	//save cursor position
 	fmt.Fprint(&buffer, "\033[s")
 
 	//transform to grayscale
-
 	grayImage := image.NewGray16(img.Bounds())
 
-	for y := 0; y < img.Bounds().Max.Y; y++ {
-		for x := 0; x < img.Bounds().Max.X; x++ {
-			grayImage.Set(x, y, img.At(x, y))
-		}
-	}
-
 	//print the image fitting the width and height
-	for ; y < img.Bounds().Max.Y; y += fitY {
+	for y := 0; y < img.Bounds().Max.Y; y += fitY {
 		for x := 0; x < img.Bounds().Max.X; x += fitX {
 			//grayScale
 			grayImage.Set(x, y, img.At(x, y))
