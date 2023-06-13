@@ -106,7 +106,7 @@ func printImage(img image.Image, fitX, fitY int, colors bool) string {
 			_, _, _, a := img.At(x, y).RGBA()
 			if a == 0 {
 				//move the cursor the size of the character to the right
-				fmt.Fprintf(&buffer, "\033[1C")
+				buffer.WriteString("\033[1C")
 				continue
 			}
 
@@ -115,18 +115,18 @@ func printImage(img image.Image, fitX, fitY int, colors bool) string {
 			//	//set color as ascii
 			if colors {
 				printInColor(&buffer, img.At(x, y))
-				fmt.Fprint(&buffer, string(gray16ToAnsi(r, g, b)))
-				fmt.Fprint(&buffer, "\033[0m")
+				buffer.WriteRune(gray16ToAnsi(r, g, b))
+				buffer.WriteString("\033[0m")
 			} else {
-				fmt.Fprint(&buffer, string(gray16ToAnsi(r, g, b)))
+				buffer.WriteRune(gray16ToAnsi(r, g, b))
 			}
 
 		}
-		fmt.Fprintln(&buffer, "")
+		buffer.WriteString("\n")
 	}
 
 	//restore cursor position
-	fmt.Fprint(&buffer, "\033[u")
+	buffer.WriteString("\033[u")
 
 	//buffer.WriteString(fmt.Sprintf("\033[%dA", img.Bounds().Max.Y+1))
 
@@ -163,7 +163,7 @@ func printGif(cache []GIFCache) {
 	//clear screen
 	fmt.Print("\033[H\033[2J")
 	for _, frame := range cache {
-		fmt.Print(frame.images)
+		os.Stdout.WriteString(frame.images)
 		time.Sleep(frame.delay)
 	}
 }
