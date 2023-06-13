@@ -86,11 +86,10 @@ func getImageFromURL(url string) io.ReadCloser {
 	return response.Body
 }
 
-func printImage(img image.Image, fitX, fitY int, colors bool) string {
-	var buffer strings.Builder
+func printImage(img image.Image, fitX, fitY int, colors bool, buffer *strings.Builder) {
 
 	//save cursor position
-	fmt.Fprint(&buffer, "\033[s")
+	fmt.Fprint(buffer, "\033[s")
 
 	//transform to grayscale
 	grayImage := image.NewGray16(img.Bounds())
@@ -114,7 +113,7 @@ func printImage(img image.Image, fitX, fitY int, colors bool) string {
 
 			//	//set color as ascii
 			if colors {
-				printInColor(&buffer, img.At(x, y))
+				printInColor(buffer, img.At(x, y))
 				buffer.WriteRune(gray16ToAnsi(r, g, b))
 				buffer.WriteString("\033[0m")
 			} else {
@@ -131,8 +130,6 @@ func printImage(img image.Image, fitX, fitY int, colors bool) string {
 	//buffer.WriteString(fmt.Sprintf("\033[%dA", img.Bounds().Max.Y+1))
 
 	//buffer.WriteString(fmt.Sprintf("\033[%dD", img.Bounds().Max.X+1))
-	return buffer.String()
-
 }
 
 func generateGifCache(img *gif.GIF, height, width int, colors bool) []GIFCache {
@@ -148,8 +145,11 @@ func generateGifCache(img *gif.GIF, height, width int, colors bool) []GIFCache {
 		wg.Add(1)
 		go (func(index int, paletted image.Image) {
 			defer wg.Done()
+			var buffer *strings.Builder = new(strings.Builder)
 
-			cache[index].images = printImage(paletted, addIterationX, addIterationY, colors)
+			printImage(paletted, addIterationX, addIterationY, colors, buffer)
+
+			cache[index].images = buffer.String()
 			cache[index].delay = time.Duration(img.Delay[index]) * (time.Second / 100)
 		})(i, frame)
 	}
